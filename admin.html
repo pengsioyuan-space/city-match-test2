@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f8fc">
+  <title>卡密管理｜城市匹配测试</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <main class="admin-shell">
+    <header class="admin-top">
+      <div>
+        <p>City Match Admin</p>
+        <h1>卡密管理</h1>
+      </div>
+      <a href="./">返回测试首页</a>
+    </header>
+
+    <section class="admin-card" data-login>
+      <h2>管理员验证</h2>
+      <p>输入腾讯云环境变量里的 ADMIN_KEY。验证信息只保存在当前浏览器。</p>
+      <form class="admin-form" data-login-form>
+        <label>
+          管理密钥
+          <input name="adminKey" type="password" autocomplete="current-password" placeholder="请输入 ADMIN_KEY" required>
+        </label>
+        <button type="submit">进入管理</button>
+      </form>
+      <p class="message" data-login-message></p>
+    </section>
+
+    <section class="admin-panel" data-panel hidden>
+      <section class="admin-card">
+        <div class="card-head">
+          <div>
+            <h2>生成新卡密</h2>
+            <p>卡密生成后可以复制给用户。到期或次数用完后会自动失效。</p>
+          </div>
+          <button class="ghost" type="button" data-logout>退出管理</button>
+        </div>
+        <form class="create-grid" data-create-form>
+          <label>
+            备注
+            <input name="note" maxlength="40" placeholder="例如：九月活动">
+          </label>
+          <label>
+            有效期
+            <select name="days">
+              <option value="7">7 天</option>
+              <option value="30" selected>30 天</option>
+              <option value="90">90 天</option>
+              <option value="365">365 天</option>
+              <option value="">永久</option>
+            </select>
+          </label>
+          <label>
+            可用次数
+            <input name="maxUses" type="number" min="1" max="500" value="1">
+          </label>
+          <label>
+            生成数量
+            <input name="count" type="number" min="1" max="50" value="1">
+          </label>
+          <button type="submit">生成卡密</button>
+        </form>
+        <div class="generated" data-generated hidden>
+          <div class="generated-head">
+            <strong>本次生成</strong>
+            <button class="ghost" type="button" data-copy-all>复制全部</button>
+          </div>
+          <pre data-generated-list></pre>
+        </div>
+        <p class="message" data-create-message></p>
+      </section>
+
+      <section class="admin-card">
+        <div class="card-head">
+          <div>
+            <h2>卡密列表</h2>
+            <p>显示最近 200 张卡密。停用后用户不能继续验证使用。</p>
+          </div>
+          <button class="ghost" type="button" data-refresh>刷新</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>卡密</th>
+                <th>备注</th>
+                <th>状态</th>
+                <th>使用</th>
+                <th>到期时间</th>
+                <th>创建时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody data-code-list></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
