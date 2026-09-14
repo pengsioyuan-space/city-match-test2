@@ -7,6 +7,7 @@ const HISTORY_KEY = 'city-match-test2-history-v1';
 const AUTH_KEY = 'city-match-test2-auth-token';
 const USER_KEY = 'city-match-test2-user';
 const ACCESS_KEY = 'city-match-test2-access-token';
+const API_ORIGIN = 'https://city-match-test2-313541-9-1324587362.sh.run.tcloudbase.com';
 const state = loadState();
 
 function loadState() {
@@ -22,7 +23,7 @@ function currentUser() { try { return JSON.parse(localStorage.getItem(USER_KEY) 
 
 async function apiRequest(path, options = {}) {
   const token = localStorage.getItem(AUTH_KEY);
-  const response = await fetch(path, { ...options, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) } });
+  const response = await fetch(`${API_ORIGIN}${path}`, { ...options, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) } });
   const type = response.headers.get('content-type') || '';
   if (!type.includes('application/json')) throw new Error('后端服务尚未部署，当前只能查看界面');
   const data = await response.json();
@@ -115,10 +116,9 @@ function finish() {
 }
 
 async function syncReport(result) {
-  if (location.hostname.endsWith('github.io') || location.protocol === 'file:') return;
   try {
     const token = localStorage.getItem(AUTH_KEY);
-    await fetch('/api/reports', {
+    await fetch(`${API_ORIGIN}/api/reports`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify(result)
