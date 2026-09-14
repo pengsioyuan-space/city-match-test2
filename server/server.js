@@ -22,8 +22,12 @@ function writeDb(name, value) {
 }
 function id(prefix) { return `${prefix}_${Date.now().toString(36)}_${crypto.randomBytes(6).toString('hex')}`; }
 function json(res, status, data) {
-  res.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+  res.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'Content-Type, Authorization, X-Admin-Key','Access-Control-Allow-Methods':'GET, POST, PATCH, OPTIONS'});
   res.end(JSON.stringify(data));
+}
+function corsPreflight(res) {
+  res.writeHead(204, {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'Content-Type, Authorization, X-Admin-Key','Access-Control-Allow-Methods':'GET, POST, PATCH, OPTIONS','Access-Control-Max-Age':'86400'});
+  res.end();
 }
 function body(req) { return new Promise((resolve,reject)=>{let raw='';req.on('data',c=>{raw+=c;if(raw.length>MAX_BODY){reject(new Error('BODY_TOO_LARGE'));req.destroy();}});req.on('end',()=>{try{resolve(raw?JSON.parse(raw):{});}catch{reject(new Error('INVALID_JSON'));}});req.on('error',reject);}); }
 function normalizeEmail(v) { return String(v||'').trim().toLowerCase(); }
@@ -93,5 +97,5 @@ function staticFile(req,res,url){
   if(!file.startsWith(ROOT)||file.includes(`${path.sep}server${path.sep}`)) return json(res,403,{error:'禁止访问'});
   fs.readFile(file,(err,data)=>{if(err)return json(res,404,{error:'页面不存在'});const ext=path.extname(file);const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml'};res.writeHead(200,{'Content-Type':types[ext]||'application/octet-stream','X-Content-Type-Options':'nosniff'});res.end(data);});
 }
-const server=http.createServer(async(req,res)=>{try{const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);if(url.pathname.startsWith('/api/'))await api(req,res,url);else staticFile(req,res,url);}catch(e){json(res,e.message==='BODY_TOO_LARGE'?413:400,{error:e.message==='INVALID_JSON'?'请求格式错误':'请求失败'});}});
+const server=http.createServer(async(req,res)=>{try{if(req.method==='OPTIONS')return corsPreflight(res);const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);if(url.pathname.startsWith('/api/'))await api(req,res,url);else staticFile(req,res,url);}catch(e){json(res,e.message==='BODY_TOO_LARGE'?413:400,{error:e.message==='INVALID_JSON'?'请求格式错误':'请求失败'});}});
 server.listen(PORT,()=>console.log(`City Match running at http://localhost:${PORT}`));
