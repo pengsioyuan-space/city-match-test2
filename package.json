@@ -1,0 +1,11 @@
+{
+  "name": "city-match-test2",
+  "version": "2.0.0",
+  "private": true,
+  "description": "独立城市匹配测试前端与自有 API 服务",
+  "scripts": {
+    "start": "node server/server.js",
+    "check": "node --check server/server.js"
+  },
+  "engines": { "node": ">=18" }
+}
