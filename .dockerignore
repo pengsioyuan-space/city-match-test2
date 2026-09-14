@@ -1,0 +1,6 @@
+.git
+.gitignore
+.env
+server/data/*.json
+*.log
+card-modal.png
