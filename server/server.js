@@ -42,6 +42,7 @@ function verifyToken(req) {
 function isAdmin(req){return safeEqual(req.headers['x-admin-key']||'',ADMIN_KEY);}
 function limited(req){const ip=req.socket.remoteAddress||'local';const now=Date.now();const v=rateMap.get(ip)||{at:now,count:0};if(now-v.at>60000){v.at=now;v.count=0;}v.count++;rateMap.set(ip,v);return v.count>100;}
 function publicUser(u){return {id:u.id,email:u.email,nickname:u.nickname,createdAt:u.createdAt};}
+function publicCode(c){return {id:c.id,code:c.code,note:c.note||'',uses:Number(c.uses||0),maxUses:Number(c.maxUses||1),expiresAt:c.expiresAt||null,disabled:!!c.disabled,createdAt:c.createdAt};}
 
 async function api(req,res,url){
   if(limited(req)) return json(res,429,{error:'请求过于频繁'});
@@ -65,13 +66,19 @@ async function api(req,res,url){
   if(req.method==='PATCH'&&url.pathname==='/api/me'){
     const auth=verifyToken(req);if(!auth)return json(res,401,{error:'请先登录'});const x=await body(req),users=readDb('users'),user=users.find(u=>u.id===auth.sub);if(!user)return json(res,404,{error:'用户不存在'});user.nickname=String(x.nickname||user.nickname).trim().slice(0,30)||user.nickname;writeDb('users',users);return json(res,200,{user:publicUser(user)});
   }
+  if(req.method==='GET'&&url.pathname==='/api/access-codes'){
+    if(!isAdmin(req)) return json(res,403,{error:'无管理权限'});return json(res,200,readDb('codes').slice(-200).reverse().map(publicCode));
+  }
   if(req.method==='POST'&&url.pathname==='/api/access-codes'){
     if(!isAdmin(req)) return json(res,403,{error:'无管理权限'});const x=await body(req),codes=readDb('codes');const code=String(x.code||crypto.randomBytes(5).toString('hex')).toUpperCase();
-    if(codes.some(c=>c.code===code)) return json(res,409,{error:'访问码已存在'});const row={id:id('code'),code,uses:0,maxUses:Number(x.maxUses||1),expiresAt:x.expiresAt||null,createdAt:new Date().toISOString()};codes.push(row);writeDb('codes',codes);return json(res,201,row);
+    if(codes.some(c=>c.code===code)) return json(res,409,{error:'访问码已存在'});const row={id:id('code'),code,note:String(x.note||'').slice(0,40),uses:0,maxUses:Number(x.maxUses||1),expiresAt:x.expiresAt||null,disabled:false,createdAt:new Date().toISOString()};codes.push(row);writeDb('codes',codes);return json(res,201,publicCode(row));
+  }
+  if(req.method==='PATCH'&&/^\/api\/access-codes\/[^/]+$/.test(url.pathname)){
+    if(!isAdmin(req)) return json(res,403,{error:'无管理权限'});const codeId=url.pathname.split('/')[3],x=await body(req),codes=readDb('codes'),row=codes.find(c=>c.id===codeId);if(!row)return json(res,404,{error:'访问码不存在'});if(typeof x.disabled==='boolean')row.disabled=x.disabled;if(typeof x.note==='string')row.note=x.note.slice(0,40);writeDb('codes',codes);return json(res,200,publicCode(row));
   }
   if(req.method==='POST'&&url.pathname==='/api/access-codes/redeem'){
     const x=await body(req),codes=readDb('codes'),row=codes.find(c=>c.code===String(x.code||'').trim().toUpperCase());
-    if(!row||row.uses>=row.maxUses||(row.expiresAt&&Date.parse(row.expiresAt)<Date.now())) return json(res,400,{error:'访问码无效或已过期'});row.uses++;writeDb('codes',codes);return json(res,200,{ok:true,accessToken:sign({scope:'quiz',codeId:row.id,exp:Date.now()+24*3600e3})});
+    if(!row||row.disabled||row.uses>=row.maxUses||(row.expiresAt&&Date.parse(row.expiresAt)<Date.now())) return json(res,400,{error:'访问码无效或已过期'});row.uses++;writeDb('codes',codes);return json(res,200,{ok:true,accessToken:sign({scope:'quiz',codeId:row.id,exp:Date.now()+24*3600e3})});
   }
   if(req.method==='POST'&&url.pathname==='/api/orders'){
     const auth=verifyToken(req);if(!auth)return json(res,401,{error:'请先登录'});const x=await body(req);const orders=readDb('orders');const row={id:id('ord'),userId:auth.sub,product:'city-match',amount:Number(x.amount||0),currency:'CNY',status:'pending',createdAt:new Date().toISOString()};orders.push(row);writeDb('orders',orders);return json(res,201,row);
