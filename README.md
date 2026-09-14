@@ -33,6 +33,18 @@ npm start
 
 访问 `http://localhost:8787`。数据默认写入 `server/data/*.json`，这些文件已被 Git 忽略，不会上传用户资料。
 
+## CloudBase 云托管
+
+仓库根目录已提供 `Dockerfile`：
+
+- 构建上下文：`.`
+- Dockerfile：`./Dockerfile`
+- 容器服务端口：`8787`
+- 对外访问端口：`80`
+- 必填环境变量：`APP_SECRET`、`ADMIN_KEY`
+
+当前 JSON 数据目录只适合功能联调。云托管实例的本地文件可能随重启或扩缩容丢失，正式运行前应把 `users`、`codes`、`orders`、`reports` 迁移到 CloudBase 文档型数据库或 MySQL。
+
 ### 自有接口
 
 - `POST /api/auth/register`：注册
