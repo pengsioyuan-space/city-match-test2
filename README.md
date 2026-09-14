@@ -8,6 +8,7 @@
 - Node 服务模式下，提供独立账号、登录令牌、访问码、订单与报告接口
 - 开始测试前显示卡密验证；购买卡密会先登录并创建待支付订单
 - 登录后可查看自己的订单状态，测试完成后可同步保存报告
+- 独立管理员页可生成、查看、复制和停用访问卡密
 - 适配手机与桌面浏览器
 - 可直接通过 GitHub Pages 发布
 
@@ -47,9 +48,11 @@ npm start
 
 ### 自有接口
 
+- `GET /api/access-codes`：管理端查询访问码
 - `POST /api/auth/register`：注册
 - `POST /api/auth/login`：登录并签发自有令牌
 - `POST /api/access-codes`：管理端创建访问码
+- `PATCH /api/access-codes/:id`：管理端停用或恢复访问码
 - `POST /api/access-codes/redeem`：核销访问码
 - `POST /api/orders`、`GET /api/orders`：创建/查询订单
 - `POST /api/orders/:id/confirm`：管理端确认订单
